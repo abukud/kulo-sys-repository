@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="0322e02c-0fad-461f-887d-6a45a4f00584" />
+	<sub-flow name="processSub_Flow" doc:id="603fe1ad-b5f9-404c-8400-568bc85b8d5f" >
+		<logger level="INFO" doc:name="Logger" doc:id="45935c7c-b9e9-4f16-94c5-e36309e70954" message="Start of the process"/>
+		<choice doc:name="Choice" doc:id="66baf271-ff1c-4085-bdf3-82fe73a425cb" >
+			<when expression='#[payload.product == "Rubber"]'>
+				<logger level="INFO" doc:name="Rubber type" doc:id="270dc531-092b-44ff-9677-51f0b586add1" message="Rubber Type"/>
+				<ee:transform doc:name="Transform Message" doc:id="686c1862-19b3-46c9-ab30-bd4450a43087">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="filePath" ><![CDATA[%dw 2.0
+output application/json
+---
+p("filePath.Rubber")]]></ee:set-variable>
+						<ee:set-variable variableName="fileName" ><![CDATA[%dw 2.0
+output application/json
+---
+"Rubber_"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="3fb301b9-0ec7-4e09-8b3b-2e861c441b62" name="file-write-sub-flow"/>
+			</when>
+			<when expression='#[payload.product == "Radial"]'>
+				<logger level="INFO" doc:name="Radial Type" doc:id="84ab9485-77be-466b-9aa7-49a537927e06" message="Radial Type"/>
+				<ee:transform doc:name="set vars" doc:id="a0c0a284-ffa6-4589-9c96-a6272063f43b" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="filePath" ><![CDATA[%dw 2.0
+output application/json
+---
+p("filePath.Radial")]]></ee:set-variable>
+						<ee:set-variable variableName="fileName" ><![CDATA[%dw 2.0
+output application/json
+---
+"Radial_"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="4586433d-850a-4b4c-9939-9ead85f6a611" name="file-write-sub-flow"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="18ec0c56-bb86-453d-a5e6-e7b95ae9f8e1" message="Invalid product type"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="133cde9c-2c00-4879-b41c-e2d548701d36" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Data updated successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="f416fff8-d849-4b74-bccc-67ff35c9de3a" message="End of the process"/>
+	</sub-flow>
+	<sub-flow name="file-write-sub-flow" doc:id="43d7da47-5682-47a0-bb6f-6afaaa1d4325" >
+		<file:write doc:name="Write" doc:id="67f0041f-90a7-44d6-9425-3e9690744578" path='#[vars.filePath ++ vars.fileName ++ (now() as String {format : "yyyy_MM_dd_HH_mm_ss"}) ++ ".json"]' config-ref="File_Config"/>
+	</sub-flow>
+</mule>
